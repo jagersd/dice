@@ -1,0 +1,52 @@
+{{define "content"}}
+<center>
+    <h1> Who goes for the next round?</h1>
+    
+    <ul id="main-menu">
+        <li>
+            <button id="create-btn" onclick="showStartForm()">
+                <b>CREATE TABLE</b>
+            </button>
+            <form action="/create" method="post" id="new-table-form" style="display:none">
+                <label for="player-name">Your name</label>
+                <input id="player-name" name="player-name" type="text"><br>
+                <label for="table-name">Table name</label>
+                <input id="table-name" name="table-name" type="text"><br>
+                <input type="submit">
+            </form>
+        </li>
+        <li>
+            <div id="parent-div">
+                <button hx-get="/showtables"
+                        hx-target="#parent-div"
+                        hx-swap="outerHTML"
+                        >
+                        <b>SHOW TABLES</b>
+                        <img class="htmx-indicator" src="/public/tail-spin.svg">
+                </button>
+            </div>
+        </li>
+    </ul>
+</center>
+
+<style>
+input:checked + #show-thing { display: none; }
+
+</style>
+
+{{end}}
+
+{{block "activeTables" .}}
+    {{if eq (len .) 0}} 
+        <p>Currently we have not active tables, but you can created one.</p> 
+    {{end}}
+    {{range .}}
+    <a href="/join/{{.Slug}}">
+        <button>
+            {{.Name}}
+        </button>
+    </a>
+    {{end}}
+{{end}}
+
+

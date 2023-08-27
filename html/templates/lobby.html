@@ -1,0 +1,34 @@
+{{define "content"}}
+
+<center>
+    <h3>lobby</h3>
+    <p>
+        <h4>Table: {{.Name}}</h4>
+        Created by: {{(index .Players 0).Name }}
+    </p>
+
+    <div hx-get="/playerlobby/{{.InternalName}}" 
+        hx-trigger="every 5s"
+        hx-target="#player-list"
+        >
+        <div id="player-list">
+        </div>
+    </div>
+
+    <button>
+        START
+    </button>
+
+</center>
+
+{{end}}
+
+{{block "playerList" .}}
+<ul>
+    {{range .}}
+    <li>{{.}}</li>
+    {{end}}
+</ul>
+{{end}}
+
+

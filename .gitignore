@@ -1,0 +1,14 @@
+# Binaries for programs and plugins
+dice
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Go workspace file
+tmp/
+
+# specific items
+html/public/htmx.min.js
