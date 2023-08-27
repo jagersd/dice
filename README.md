@@ -7,8 +7,8 @@ When done, it should provide the opportunity to quickly get into a game of stree
 Again, this is an educational project for me. The aim this time is to have this fully utilize Go's templating package together with htmx and its web socket extension.
 
 ## Tools and inspiration
-https://go.dev/
-https://github.com/go-chi/go-chi
-https://htmx.org/
-https://philipptanlak.com/web-frontends-in-go/
-https://github.com/gorilla/websocket
+- https://go.dev/
+- https://github.com/go-chi/go-chi
+- https://htmx.org/
+- https://philipptanlak.com/web-frontends-in-go/
+- https://github.com/gorilla/websocket
