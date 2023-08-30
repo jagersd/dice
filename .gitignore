@@ -12,3 +12,4 @@ tmp/
 
 # specific items
 html/public/htmx.min.js
+html/public/htmxws.min.js

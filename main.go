@@ -10,6 +10,9 @@ import (
 
 func main() {
 	staticFiles := http.FS(html.StaticFiles)
+	hub := newHub()
+	go hub.run()
+
 	r := chi.NewRouter()
 	r.Handle("/public/*", http.FileServer(staticFiles))
 
@@ -21,6 +24,15 @@ func main() {
 	// returns partials
 	r.Get("/playerlobby/{slug}", getPlayerList)
 	r.Get("/showtables", showActiveTables)
+
+	// web socket
+	r.Get("/ws/{slug}", func(w http.ResponseWriter, r *http.Request) {
+		table := chi.URLParam(r, "slug")
+		if _, ok := activeTables[table]; !ok {
+			return
+		}
+		serveWs(activeTables[table], hub, w, r)
+	})
 
 	http.ListenAndServe(":8080", r)
 }
@@ -61,5 +73,7 @@ func showActiveTables(w http.ResponseWriter, r *http.Request) {
 }
 
 func gameHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "todo")
+	tableSlug := chi.URLParam(r, "slug")
+	table := activeTables[tableSlug]
+	html.Game(w, table)
 }

@@ -30,6 +30,14 @@ func LobbyPlayerList(w io.Writer, data []string) error {
 	return views["lobby"].ExecuteTemplate(w, "playerList", data)
 }
 
+func Game(w io.Writer, data interface{}) error {
+	return views["game"].Execute(w, data)
+}
+
+func GameState(w io.Writer, data interface{}) error {
+	return views["game"].ExecuteTemplate(w, "gameState", data)
+}
+
 func ShowActiveTables(w io.Writer, ts map[string]string) error {
 	type table struct {
 		Slug string

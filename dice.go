@@ -13,14 +13,16 @@ type player struct {
 	Bet       string
 	Wallet    int
 	LastRoll  []uint
+	wsClient  *Client
 }
 
 type table struct {
-	Name         string
-	InternalName string
-	Players      []player
-	Point        uint
-	Complete     bool
+	Name          string
+	InternalName  string
+	Players       []player
+	Point         uint
+	Complete      bool
+	wsConnections map[*Client]bool
 }
 
 func (p *player) roll() {
@@ -45,6 +47,7 @@ func newTable(tableName, playerName string) (string, error) {
 	t.Name = tableName
 	t.InternalName = createRandomString()
 	t.Players = append(t.Players, p)
+	t.wsConnections = make(map[*Client]bool)
 
 	activeTables[t.InternalName] = &t
 

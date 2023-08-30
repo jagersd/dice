@@ -1,7 +1,24 @@
 {{define "content"}}
+<script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
 <center>
     <h3>WELCOME</h3>
+    <div hx-ext="ws" ws-connect="/ws/{{.InternalName}}">
+        <div id="notifications"></div>
+        <div id="game-state">
+            ...
+        </div>
+        <form id="form" ws-send>
+            <input name="chat_message">
+        </form>
+    </div>
 </center>
 
 {{end}}
 
+
+{{block "gameState" .}}
+<div id="game-state">
+{{.Name}}
+</div>
+
+{{end}}
