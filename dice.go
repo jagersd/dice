@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dice/html"
 	"errors"
 	"math/rand"
 )
@@ -9,11 +10,12 @@ var activeTables = make(map[string]*table, 10)
 
 type player struct {
 	Name      string
+	Index     int
 	BetAmount int
 	Bet       string
 	Wallet    int
 	LastRoll  []uint
-	wsClient  *Client
+	IsShooter bool
 }
 
 type table struct {
@@ -26,6 +28,7 @@ type table struct {
 }
 
 func (p *player) roll() {
+	p.placeBet(10)
 	p.LastRoll[0] = uint(rand.Intn(6-1) + 1)
 	p.LastRoll[1] = uint(rand.Intn(6-1) + 1)
 }
@@ -35,6 +38,20 @@ func (p *player) placeBet(amount int) {
 		return
 	}
 	p.Wallet -= amount
+}
+
+func (t *table) broadcastGameState() {
+	type gameState struct {
+		Table  table
+		Player player
+	}
+
+	for c := range t.wsConnections {
+		c.send <- html.WSGameState(gameState{
+			Table:  *t,
+			Player: *c.player,
+		})
+	}
 }
 
 func newTable(tableName, playerName string) (string, error) {
@@ -56,7 +73,8 @@ func newTable(tableName, playerName string) (string, error) {
 
 func newPlayer(playerName string) player {
 	return player{
-		Name:   playerName,
-		Wallet: 100,
+		Name:     playerName,
+		Wallet:   110,
+		LastRoll: make([]uint, 2),
 	}
 }

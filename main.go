@@ -20,18 +20,30 @@ func main() {
 	r.Get("/", home)
 	r.Post("/create", createHandler)
 	r.Get("/game/{slug}", gameHandler)
+	r.Post("/game/{slug}", joinHandler)
 
 	// returns partials
 	r.Get("/playerlobby/{slug}", getPlayerList)
 	r.Get("/showtables", showActiveTables)
+	r.Get("/join-table-form/{slug}", showJoinForm)
 
 	// web socket
-	r.Get("/ws/{slug}", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/ws/{slug}/{index}", func(w http.ResponseWriter, r *http.Request) {
 		table := chi.URLParam(r, "slug")
+		playerIndex := chi.URLParam(r, "index")
 		if _, ok := activeTables[table]; !ok {
 			return
 		}
-		serveWs(activeTables[table], hub, w, r)
+
+		if playerIndex == "" {
+			return
+		}
+		index, err := strToInt(playerIndex)
+		if err != nil {
+			return
+		}
+
+		serveWs(activeTables[table], index, hub, w, r)
 	})
 
 	http.ListenAndServe(":8080", r)
@@ -64,6 +76,21 @@ func createHandler(w http.ResponseWriter, r *http.Request) {
 	html.Lobby(w, activeTables[slug])
 }
 
+func joinHandler(w http.ResponseWriter, r *http.Request) {
+	tableSlug := chi.URLParam(r, "slug")
+	playerName := r.PostFormValue("player-name")
+	if playerName == "" {
+		return
+	}
+
+	player := newPlayer(playerName)
+	player.Index = len(activeTables[tableSlug].Players)
+
+	activeTables[tableSlug].Players = append(activeTables[tableSlug].Players, player)
+
+	html.Game(w, activeTables[tableSlug], player.Index)
+}
+
 func showActiveTables(w http.ResponseWriter, r *http.Request) {
 	ts := make(map[string]string)
 	for _, t := range activeTables {
@@ -72,8 +99,17 @@ func showActiveTables(w http.ResponseWriter, r *http.Request) {
 	html.ShowActiveTables(w, ts)
 }
 
+func showJoinForm(w http.ResponseWriter, r *http.Request) {
+	tableSlug := chi.URLParam(r, "slug")
+	if _, ok := activeTables[tableSlug]; !ok {
+		return
+	}
+
+	html.ShowJoinForm(w, activeTables[tableSlug])
+}
+
 func gameHandler(w http.ResponseWriter, r *http.Request) {
 	tableSlug := chi.URLParam(r, "slug")
 	table := activeTables[tableSlug]
-	html.Game(w, table)
+	html.Game(w, table, 0)
 }

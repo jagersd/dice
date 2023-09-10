@@ -2,22 +2,21 @@ package main
 
 import "log"
 
-// Hub maintains the set of active clients and broadcasts messages to the
-// clients.
 type Hub struct {
-	broadcast  chan Message
+	broadcast  chan Response
 	register   chan *Client
 	unregister chan *Client
 }
 
-type Message struct {
+type Response struct {
 	table   string
+	update  bool
 	content []byte
 }
 
 func newHub() *Hub {
 	return &Hub{
-		broadcast:  make(chan Message),
+		broadcast:  make(chan Response),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 	}
@@ -39,13 +38,17 @@ func (h *Hub) run() {
 				log.Println("Removing table ", client.table)
 				delete(activeTables, client.table)
 			}
-		case message := <-h.broadcast:
-			for client := range activeTables[message.table].wsConnections {
-				select {
-				case client.send <- message.content:
-				default:
-					close(client.send)
-					delete(activeTables[message.table].wsConnections, client)
+		case response := <-h.broadcast:
+			if response.update {
+				activeTables[response.table].broadcastGameState()
+			} else {
+				for client := range activeTables[response.table].wsConnections {
+					select {
+					case client.send <- response.content:
+					default:
+						close(client.send)
+						delete(activeTables[response.table].wsConnections, client)
+					}
 				}
 			}
 		}

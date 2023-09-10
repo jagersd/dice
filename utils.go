@@ -2,6 +2,7 @@ package main
 
 import (
 	"math/rand"
+	"strconv"
 )
 
 func createRandomString() string {
@@ -12,4 +13,12 @@ func createRandomString() string {
 	}
 
 	return string(s)
+}
+
+func strToInt(s string) (int, error) {
+	intVar, err := strconv.Atoi(s)
+	if err != nil {
+		return -1, err
+	}
+	return intVar, nil
 }

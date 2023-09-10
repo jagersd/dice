@@ -1,6 +1,7 @@
 package html
 
 import (
+	"bytes"
 	"embed"
 	"html/template"
 	"io"
@@ -30,27 +31,40 @@ func LobbyPlayerList(w io.Writer, data []string) error {
 	return views["lobby"].ExecuteTemplate(w, "playerList", data)
 }
 
-func Game(w io.Writer, data interface{}) error {
-	return views["game"].Execute(w, data)
+func Game(w io.Writer, data interface{}, index int) error {
+	type enterGame struct {
+		Table       interface{}
+		PlayerIndex int
+	}
+
+	return views["game"].Execute(w, enterGame{
+		Table:       data,
+		PlayerIndex: index,
+	})
 }
 
 func GameState(w io.Writer, data interface{}) error {
 	return views["game"].ExecuteTemplate(w, "gameState", data)
 }
 
+func WSGameState(data interface{}) []byte {
+	var buffer bytes.Buffer
+	views["game"].ExecuteTemplate(&buffer, "gameState", data)
+	return buffer.Bytes()
+}
+
+func Roll() []byte {
+	var buffer bytes.Buffer
+	views["game"].ExecuteTemplate(&buffer, "bet", nil)
+	return buffer.Bytes()
+}
+
 func ShowActiveTables(w io.Writer, ts map[string]string) error {
-	type table struct {
-		Slug string
-		Name string
-	}
-	var tables []table
-	for s, n := range ts {
-		tables = append(tables, table{
-			Slug: s,
-			Name: n,
-		})
-	}
-	return views["home"].ExecuteTemplate(w, "activeTables", tables)
+	return views["home"].ExecuteTemplate(w, "activeTables", ts)
+}
+
+func ShowJoinForm(w io.Writer, data interface{}) error {
+	return views["home"].ExecuteTemplate(w, "joinForm", data)
 }
 
 func parse(file string) *template.Template {

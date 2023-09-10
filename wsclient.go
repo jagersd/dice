@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"dice/html"
 	"log"
 	"net/http"
@@ -24,10 +23,11 @@ var upgrader = websocket.Upgrader{
 
 // Client is a middleman between the websocket connection and the hub.
 type Client struct {
-	hub   *Hub
-	table string
-	conn  *websocket.Conn
-	send  chan []byte
+	hub    *Hub
+	table  string
+	conn   *websocket.Conn
+	send   chan []byte
+	player *player
 }
 
 // readPump pumps messages from the websocket connection to the hub.
@@ -44,28 +44,34 @@ func (c *Client) readPump() {
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.conn.SetPongHandler(func(string) error { c.conn.SetReadDeadline(time.Now().Add(pongWait)); return nil })
 	for {
-		_, message, err := c.conn.ReadMessage()
+		var message map[string]interface{}
+		err := c.conn.ReadJSON(&message)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
 			break
 		}
-		message = c.prepResponse()
-		m := Message{
-			table:   c.table,
-			content: message,
-		}
 
-		c.hub.broadcast <- m
+		c.hub.broadcast <- c.generateResponse(&message)
 	}
 }
 
-func (c *Client) prepResponse() []byte {
-	var buffer bytes.Buffer
-	html.GameState(&buffer, activeTables[c.table])
+func (c *Client) generateResponse(incomingMessage *map[string]interface{}) Response {
+	for k := range *incomingMessage {
+		if k == "roll" {
+			c.player.roll()
+			c.send <- html.Roll()
+		}
+	}
 
-	return buffer.Bytes()
+	var response Response
+
+	response.table = c.table
+	response.update = true
+	response.content = html.WSGameState(activeTables[c.table])
+
+	return response
 }
 
 // writePump pumps messages from the hub to the websocket connection.
@@ -113,14 +119,21 @@ func (c *Client) writePump() {
 	}
 }
 
-// serveWs handles websocket requests from the peer.
-func serveWs(t *table, hub *Hub, w http.ResponseWriter, r *http.Request) {
+func serveWs(t *table, index int, hub *Hub, w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := &Client{hub: hub, table: t.InternalName, conn: conn, send: make(chan []byte, 256)}
+
+	client := &Client{
+		hub:    hub,
+		table:  t.InternalName,
+		conn:   conn,
+		send:   make(chan []byte, 256),
+		player: &t.Players[index],
+	}
+
 	client.hub.register <- client
 
 	go client.writePump()

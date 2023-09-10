@@ -2,13 +2,13 @@
 <script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
 <center>
     <h3>WELCOME</h3>
-    <div hx-ext="ws" ws-connect="/ws/{{.InternalName}}">
+    <div hx-ext="ws" ws-connect="/ws/{{.Table.InternalName}}/{{.PlayerIndex}}">
         <div id="notifications"></div>
         <div id="game-state">
             ...
         </div>
-        <form id="form" ws-send>
-            <input name="chat_message">
+        <form id="ws-form" ws-send>
+            <button type="submit" name="roll" value="true">Roll</button>
         </form>
     </div>
 </center>
@@ -18,7 +18,24 @@
 
 {{block "gameState" .}}
 <div id="game-state">
-{{.}}
+    {{.Table}}
+    <div id="table-details">
+        {{range .Table.Players}}
+            {{.Name}} -- {{.Wallet}}
+        {{end}}
+    </div>
+    {{.Player}}
+    <div id="player-controlls">
+        <h1>{{.Player.Name}}</h1>
+        <p>Coins: {{.Player.Wallet}}</p>
+        
+    </div>
 </div>
+{{end}}
 
+{{block "bet" .}}
+    <form id="ws-form" ws-send>
+    <input type="number" name="wager">
+    <button type="submit" name="bet" hx-target="ws-form" hx-swap="innerHTML">Set Wager</button>
+    </form>
 {{end}}
