@@ -24,11 +24,15 @@ type table struct {
 	Players       []player
 	Point         uint
 	Complete      bool
+	BetHight      uint
+	MaxBetHight   uint
 	wsConnections map[*Client]bool
 }
 
-func (p *player) roll() {
-	p.placeBet(10)
+func (p *player) roll(determineShooter bool) {
+	if determineShooter {
+		p.placeBet(10)
+	}
 	p.LastRoll[0] = uint(rand.Intn(6-1) + 1)
 	p.LastRoll[1] = uint(rand.Intn(6-1) + 1)
 }
@@ -52,6 +56,27 @@ func (t *table) broadcastGameState() {
 			Player: *c.player,
 		})
 	}
+}
+
+func (t *table) determineShooter() {
+	var (
+		highestRoll int
+		sum         uint
+	)
+
+	for i, p := range t.Players {
+		if p.LastRoll[0] == 0 && p.LastRoll[1] == 0 {
+			return
+		}
+
+		if (p.LastRoll[0] + p.LastRoll[1]) > sum {
+			sum = p.LastRoll[0] + p.LastRoll[1]
+			highestRoll = i
+		}
+	}
+
+	t.Players[highestRoll].IsShooter = true
+	t.broadcastGameState()
 }
 
 func newTable(tableName, playerName string) (string, error) {

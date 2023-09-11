@@ -59,9 +59,13 @@ func (c *Client) readPump() {
 
 func (c *Client) generateResponse(incomingMessage *map[string]interface{}) Response {
 	for k := range *incomingMessage {
-		if k == "roll" {
-			c.player.roll()
+		switch k {
+		case "start-roll":
+			c.player.roll(true)
 			c.send <- html.Roll()
+			activeTables[c.table].determineShooter()
+		case "bet":
+			c.send <- []byte("test")
 		}
 	}
 

@@ -8,7 +8,9 @@
             ...
         </div>
         <form id="ws-form" ws-send>
-            <button type="submit" name="roll" value="true">Roll</button>
+            <div id="player-control">
+                <button type="submit" name="start-roll" value="true">Roll</button>
+            </div>
         </form>
     </div>
 </center>
@@ -18,13 +20,11 @@
 
 {{block "gameState" .}}
 <div id="game-state">
-    {{.Table}}
     <div id="table-details">
         {{range .Table.Players}}
-            {{.Name}} -- {{.Wallet}}
+        {{.Name}} -- {{.Wallet}} -- {{.LastRoll}} -- {{ if .IsShooter }} <b> shooter </b>  {{end}}
         {{end}}
     </div>
-    {{.Player}}
     <div id="player-controlls">
         <h1>{{.Player.Name}}</h1>
         <p>Coins: {{.Player.Wallet}}</p>
@@ -34,8 +34,14 @@
 {{end}}
 
 {{block "bet" .}}
-    <form id="ws-form" ws-send>
+<div id="player-control">
     <input type="number" name="wager">
-    <button type="submit" name="bet" hx-target="ws-form" hx-swap="innerHTML">Set Wager</button>
-    </form>
+    <div>
+        <input type="radio" id="crap" value="crap" name="betfor" checked>
+        <label for="crap">crap</label>
+        <input type="radio" id="pass" value="pass" name="betfor">
+        <label for="pass">pass</label>
+    </div>
+    <button type="submit" name="bet" hx-target="#player-control" hx-swap="innerHTML">Set Wager</button>
+</div>
 {{end}}
