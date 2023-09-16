@@ -21,8 +21,18 @@
 {{block "gameState" .}}
 <div id="game-state">
     <div id="table-details">
+        <h5>{{.Table.Name}}</h5>
+        <p>
+        <ul>
+            <li>Current bet amount: {{.Table.BetHight}}</li>
+            <li>Max bet hight: {{.Table.MaxBetHight}}</li>
+            <li>The point: {{.Table.Point}}</li>
+        </ul>
+
+        </p>
+
         {{range .Table.Players}}
-        {{.Name}} -- {{.Wallet}} -- {{.LastRoll}} -- {{ if .IsShooter }} <b> shooter </b>  {{end}}
+        <p>{{.Name}} -- {{.Wallet}} -- {{.Bet}} -- {{.LastRoll}} -- {{ if .IsShooter }} <b> shooter </b>  {{end}} </p>
         {{end}}
     </div>
     <div id="player-controlls">
@@ -35,7 +45,7 @@
 
 {{block "bet" .}}
 <div id="player-control">
-    <input type="number" name="wager">
+    <input type="number" name="wager" min="{{.}}" placeholder="{{.}}">
     <div>
         <input type="radio" id="crap" value="crap" name="betfor" checked>
         <label for="crap">crap</label>
@@ -45,3 +55,16 @@
     <button type="submit" name="bet" hx-target="#player-control" hx-swap="innerHTML">Set Wager</button>
 </div>
 {{end}}
+
+{{block "play" .}}
+<div id="player-control">
+    {{if .IsShooter}}
+    <button type="submit" name="shooter-roll" hx-target="#player-control" hx-swap="innerHTML">Roll</button>
+    {{ else }}
+    <p>TEST</p>
+    {{ end }}
+</div>
+
+{{end}}
+
+

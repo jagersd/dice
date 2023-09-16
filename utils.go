@@ -1,9 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 )
+
+type wsparsed struct {
+	s string
+	i int
+}
 
 func createRandomString() string {
 	runes := []rune("abcdefghijklmnopqrstuvwxyz")
@@ -21,4 +27,19 @@ func strToInt(s string) (int, error) {
 		return -1, err
 	}
 	return intVar, nil
+}
+
+func parseInterface(input interface{}, requestedType string) wsparsed {
+	switch requestedType {
+	case "s":
+		return wsparsed{s: fmt.Sprintf("%s", input)}
+	case "i":
+		number, err := strconv.Atoi(fmt.Sprintf("%s", input))
+		if err != nil {
+			return wsparsed{i: 0}
+		}
+		return wsparsed{i: number}
+	default:
+		return wsparsed{s: "", i: 0}
+	}
 }

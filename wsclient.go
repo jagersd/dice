@@ -47,25 +47,37 @@ func (c *Client) readPump() {
 		var message map[string]interface{}
 		err := c.conn.ReadJSON(&message)
 		if err != nil {
+			log.Printf("error: %v", err)
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("error: %v", err)
 			}
 			break
 		}
 
-		c.hub.broadcast <- c.generateResponse(&message)
+		c.hub.broadcast <- c.generateResponse(message)
 	}
 }
 
-func (c *Client) generateResponse(incomingMessage *map[string]interface{}) Response {
-	for k := range *incomingMessage {
+func (c *Client) generateResponse(incomingMessage map[string]interface{}) Response {
+	for k := range incomingMessage {
 		switch k {
 		case "start-roll":
 			c.player.roll(true)
-			c.send <- html.Roll()
+			c.send <- []byte(`<div id="player-control">Wait for shooter to be determined</div>`)
+			// c.send <- html.ShowWagerControlls(c.player)
 			activeTables[c.table].determineShooter()
 		case "bet":
-			c.send <- []byte("test")
+			if _, ok := incomingMessage["betfor"]; ok {
+				c.player.setWager(parseInterface(incomingMessage["betfor"], "s").s)
+				c.player.placeBet(parseInterface(incomingMessage["wager"], "i").i)
+			}
+			if c.player.IsShooter {
+				activeTables[c.table].BetHight = uint(parseInterface(incomingMessage["wager"], "i").i)
+				activeTables[c.table].letNonShootersBet()
+			}
+			c.send <- html.Play(c.player)
+		case "shooter-roll":
+			c.player.roll(false)
 		}
 	}
 

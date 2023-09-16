@@ -1,6 +1,8 @@
 package main
 
-import "log"
+import (
+	"log"
+)
 
 type Hub struct {
 	broadcast  chan Response
@@ -27,6 +29,7 @@ func (h *Hub) run() {
 		select {
 		case client := <-h.register:
 			activeTables[client.table].wsConnections[client] = true
+			activeTables[client.table].broadcastGameState()
 		case client := <-h.unregister:
 			log.Println("player disconnected")
 			client.send <- []byte("A player has disconnected")

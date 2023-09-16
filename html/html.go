@@ -53,9 +53,15 @@ func WSGameState(data interface{}) []byte {
 	return buffer.Bytes()
 }
 
-func Roll() []byte {
+func ShowWagerControlls(minBet uint) []byte {
 	var buffer bytes.Buffer
-	views["game"].ExecuteTemplate(&buffer, "bet", nil)
+	views["game"].ExecuteTemplate(&buffer, "bet", minBet)
+	return buffer.Bytes()
+}
+
+func Play(player interface{}) []byte {
+	var buffer bytes.Buffer
+	views["game"].ExecuteTemplate(&buffer, "play", player)
 	return buffer.Bytes()
 }
 
