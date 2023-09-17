@@ -7,6 +7,9 @@
         <div id="game-state">
             ...
         </div>
+        <div id="announcements">
+
+        </div>
         <form id="ws-form" ws-send>
             <div id="player-control">
                 <button type="submit" name="start-roll" value="true">Roll</button>
@@ -32,7 +35,13 @@
         </p>
 
         {{range .Table.Players}}
-        <p>{{.Name}} -- {{.Wallet}} -- {{.Bet}} -- {{.LastRoll}} -- {{ if .IsShooter }} <b> shooter </b>  {{end}} </p>
+        <div class="player-card">
+            <p>{{.Name}} -- {{.Wallet}} 
+            -- {{.Bet}} -- {{.BetAmount}} -- 
+            {{.LastRoll}} -- 
+            {{ if .IsShooter }} <b> shooter </b>  {{end}} 
+            </p>
+        </div>
         {{end}}
     </div>
     <div id="player-controlls">
@@ -66,5 +75,11 @@
 </div>
 
 {{end}}
+
+{{block "reset" .}}
+<div id="player-control">
+    <button type="submit" name="start-roll" value="true">Roll to start</button>
+</div>
+{{ end }}
 
 

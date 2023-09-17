@@ -78,6 +78,7 @@ func (c *Client) generateResponse(incomingMessage map[string]interface{}) Respon
 			c.send <- html.Play(c.player)
 		case "shooter-roll":
 			c.player.roll(false)
+			activeTables[c.table].evaluateRoll()
 		}
 	}
 

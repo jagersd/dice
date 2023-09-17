@@ -65,6 +65,12 @@ func Play(player interface{}) []byte {
 	return buffer.Bytes()
 }
 
+func Reset() []byte {
+	var buffer bytes.Buffer
+	views["game"].ExecuteTemplate(&buffer, "reset", nil)
+	return buffer.Bytes()
+}
+
 func ShowActiveTables(w io.Writer, ts map[string]string) error {
 	return views["home"].ExecuteTemplate(w, "activeTables", ts)
 }

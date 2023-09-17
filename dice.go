@@ -116,11 +116,75 @@ func (t *table) evaluateRoll() {
 		result = passOrCraps(rolled)
 		if result == "" {
 			t.Point = rolled
+			return
+		} else {
+			t.payout(result)
+			return
+		}
+	} else {
+		if rolled == t.Point {
+			t.payout("pass")
+			return
+		}
+		if rolled == 7 {
+			t.payout("craps")
+			return
 		}
 	}
 }
 
 func (t *table) payout(result string) {
+	var basePot, sidePot int
+	var winners []int
+
+	for c := range t.wsConnections {
+		c.send <- []byte(`<div id="announcements"><h2>` + result + ` won! </h2></div>`)
+		c.send <- html.Reset()
+	}
+
+	for i, p := range t.Players {
+		basePot += int(t.BetHight)
+		p.BetAmount -= int(t.BetHight)
+		if p.BetAmount != 0 {
+			sidePot += p.BetAmount
+		}
+		if p.Bet == result {
+			winners = append(winners, i)
+		}
+	}
+
+	deductFromSidePot := 0
+
+	if len(winners) == 0 {
+		for _, p := range t.Players {
+			p.Wallet += p.BetAmount
+		}
+		t.setForNextRound()
+		return
+	}
+
+	if sidePot != 0 {
+		for _, v := range winners {
+			if t.Players[v].BetAmount != 0 {
+				sidePotWin := (t.Players[v].BetAmount / sidePot) * 100
+				t.Players[v].Wallet += sidePotWin
+				deductFromSidePot += sidePotWin
+			}
+		}
+
+		sidePot -= deductFromSidePot
+		if sidePot > 0 {
+			basePot += sidePot
+		}
+	}
+
+	baseWinAmount := basePot / len(winners)
+
+	for _, v := range winners {
+		t.Players[v].Wallet += baseWinAmount
+	}
+
+	t.setForNextRound()
 }
 
 func (t *table) setForNextRound() {
@@ -132,6 +196,7 @@ func (t *table) setForNextRound() {
 		p.LastRoll[1] = 0
 		p.IsShooter = false
 		p.BetAmount = 0
+		p.Bet = ""
 	}
 }
 
