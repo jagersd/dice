@@ -8,6 +8,8 @@ import (
 
 var activeTables = make(map[string]*table, 10)
 
+const minimumBet int = 5
+
 type player struct {
 	Name      string
 	Index     int
@@ -31,7 +33,7 @@ type table struct {
 
 func (p *player) roll(determineShooter bool) {
 	if determineShooter {
-		p.placeBet(10)
+		p.placeBet(minimumBet)
 	}
 	p.LastRoll[0] = uint(rand.Intn(6-1) + 1)
 	p.LastRoll[1] = uint(rand.Intn(6-1) + 1)
@@ -43,12 +45,13 @@ func (p *player) setWager(bet string) {
 
 func (p *player) placeBet(amount int) {
 	if amount == 0 {
-		amount = 10
+		amount = int(minimumBet)
 	}
 
-	if p.Wallet-amount < 0 {
+	if (p.Wallet - amount) < 1 {
 		return
 	}
+
 	p.BetAmount = amount
 	p.Wallet -= amount
 }
@@ -69,9 +72,9 @@ func (t *table) broadcastGameState() {
 
 func (t *table) determineShooter() {
 	var (
-		highestRoll int
-		sum         uint
-		maxBetHight int
+		highestRoller int
+		sum           uint
+		maxBetHight   int
 	)
 
 	for i, p := range t.Players {
@@ -81,7 +84,7 @@ func (t *table) determineShooter() {
 
 		if (p.LastRoll[0] + p.LastRoll[1]) > sum {
 			sum = p.LastRoll[0] + p.LastRoll[1]
-			highestRoll = i
+			highestRoller = i
 		}
 
 		if p.Wallet < maxBetHight || maxBetHight == 0 {
@@ -89,12 +92,12 @@ func (t *table) determineShooter() {
 		}
 	}
 
-	t.Players[highestRoll].IsShooter = true
+	t.Players[highestRoller].IsShooter = true
 	t.MaxBetHight = uint(maxBetHight)
 
 	for c := range t.wsConnections {
 		if c.player.IsShooter {
-			c.send <- html.ShowWagerControlls(10)
+			c.send <- html.ShowWagerControlls(minimumBet)
 		} else {
 			c.send <- []byte(`<div id="player-control">The shooter is setting te bet </div>`)
 		}
@@ -137,17 +140,20 @@ func (t *table) payout(result string) {
 	var basePot, sidePot int
 	var winners []int
 
+	basePot = len(t.Players) * 5
+
 	for c := range t.wsConnections {
 		c.send <- []byte(`<div id="announcements"><h2>` + result + ` won! </h2></div>`)
 		c.send <- html.Reset()
 	}
 
 	for i, p := range t.Players {
-		basePot += int(t.BetHight)
-		p.BetAmount -= int(t.BetHight)
-		if p.BetAmount != 0 {
-			sidePot += p.BetAmount
+		basePot += p.BetAmount
+		t.Players[i].BetAmount -= int(t.BetHight)
+		if t.Players[i].BetAmount != 0 {
+			sidePot += t.Players[i].BetAmount
 		}
+
 		if p.Bet == result {
 			winners = append(winners, i)
 		}
@@ -156,8 +162,8 @@ func (t *table) payout(result string) {
 	deductFromSidePot := 0
 
 	if len(winners) == 0 {
-		for _, p := range t.Players {
-			p.Wallet += p.BetAmount
+		for i := range t.Players {
+			t.Players[i].Wallet += (int(t.BetHight) + t.Players[i].BetAmount + minimumBet)
 		}
 		t.setForNextRound()
 		return
@@ -191,19 +197,19 @@ func (t *table) setForNextRound() {
 	t.Point = 0
 	t.BetHight = 0
 	t.MaxBetHight = 0
-	for _, p := range t.Players {
-		p.LastRoll[0] = 0
-		p.LastRoll[1] = 0
-		p.IsShooter = false
-		p.BetAmount = 0
-		p.Bet = ""
+	for i := range t.Players {
+		t.Players[i].LastRoll[0] = 0
+		t.Players[i].LastRoll[1] = 0
+		t.Players[i].IsShooter = false
+		t.Players[i].BetAmount = 0
+		t.Players[i].Bet = ""
 	}
 }
 
 func (t *table) letNonShootersBet() {
 	for c := range t.wsConnections {
 		if !c.player.IsShooter {
-			c.send <- html.ShowWagerControlls(t.BetHight)
+			c.send <- html.ShowWagerControlls(int(t.BetHight))
 		}
 	}
 }

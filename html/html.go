@@ -3,6 +3,7 @@ package html
 import (
 	"bytes"
 	"embed"
+	"fmt"
 	"html/template"
 	"io"
 )
@@ -53,7 +54,7 @@ func WSGameState(data interface{}) []byte {
 	return buffer.Bytes()
 }
 
-func ShowWagerControlls(minBet uint) []byte {
+func ShowWagerControlls(minBet int) []byte {
 	var buffer bytes.Buffer
 	views["game"].ExecuteTemplate(&buffer, "bet", minBet)
 	return buffer.Bytes()
@@ -77,6 +78,11 @@ func ShowActiveTables(w io.Writer, ts map[string]string) error {
 
 func ShowJoinForm(w io.Writer, data interface{}) error {
 	return views["home"].ExecuteTemplate(w, "joinForm", data)
+}
+
+func DisplayShooterRoll(roll1, roll2 uint) []byte {
+	htm := `<div id="shooter-roll"> shooter rolled ` + fmt.Sprintf("%d & %d", roll1, roll2) + `</div>`
+	return []byte(htm)
 }
 
 func parse(file string) *template.Template {

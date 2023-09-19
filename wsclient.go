@@ -72,13 +72,22 @@ func (c *Client) generateResponse(incomingMessage map[string]interface{}) Respon
 				c.player.placeBet(parseInterface(incomingMessage["wager"], "i").i)
 			}
 			if c.player.IsShooter {
-				activeTables[c.table].BetHight = uint(parseInterface(incomingMessage["wager"], "i").i)
+				betHight := parseInterface(incomingMessage["wager"], "i").i
+				if betHight == 0 {
+					betHight = minimumBet
+				}
+				activeTables[c.table].BetHight = uint(betHight)
 				activeTables[c.table].letNonShootersBet()
 			}
 			c.send <- html.Play(c.player)
 		case "shooter-roll":
 			c.player.roll(false)
 			activeTables[c.table].evaluateRoll()
+			c.hub.broadcast <- Response{
+				table:   c.table,
+				update:  false,
+				content: html.DisplayShooterRoll(c.player.LastRoll[0], c.player.LastRoll[1]),
+			}
 		}
 	}
 

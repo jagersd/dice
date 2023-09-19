@@ -67,15 +67,13 @@ button:active {
 #announcements {
     color: var(--c-orange);
     -moz-animation: hideAfterSec 0s ease-in 4s forwards;
-    /* Firefox */
     -webkit-animation: hideAfterSec 0s ease-in 4s forwards;
-    /* Safari and Chrome */
     -o-animation: hideAfterSec 0s ease-in 4s forwards;
-    /* Opera */
     animation: hideAfterSec 0s ease-in 4s forwards;
     -webkit-animation-fill-mode: forwards;
     animation-fill-mode: forwards;
 }
+
 @keyframes hideAfterSec {
     to {
         width:0;
